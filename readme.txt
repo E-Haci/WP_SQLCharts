@@ -1,10 +1,9 @@
 === SQL Chart Builder ===
-Contributors: elvinhaci
-Donate link: http://guaven.com/donate
+Contributors: Elvin Haci
 Tags: graph,charts,sql charts,mysql charts,visualizer,sql visualizer,sql reports,mysql reports,google charts,google chart,mysql to chart,mysql to graph
 Requires at least: 3.9.0
-Tested up to: 4.5.0
-Stable tag: 1.0.2
+Tested up to: 4.7.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,9 +54,6 @@ Your votes really helps us. Thanks.
 
 
 == Changelog ==
-
-= 1.0.2=
-* Added some screenshots
 
 = 1.0.0=
 * Uploaded to Wordpress.org

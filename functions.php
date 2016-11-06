@@ -320,20 +320,26 @@ function gvn_schart_shortcode($atts)
         return 'Your SQL returnes empty date, please recheck your SQL query above';
     else {
         ob_start();
+        global $sqlcharts_inserted_script;
+    if (empty($sqlcharts_inserted_script)) $sqlcharts_inserted_script=1;       
+
+       if ($sqlcharts_inserted_script==1) {
+         
 ?>
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  
+  <?php } ?>
      <script type="text/javascript">;
        google.charts.load('current', {'packages':[<?php
         $tip_g = get_post_meta($atts['id'], 'guaven_sqlcharts_graphtype', true);
         
         echo gvn_schart_libloads($tip_g, 'packages');
 ?>]});
-      google.charts.setOnLoadCallback(drawChart);
-      function drawChart() {
+      google.charts.setOnLoadCallback(drawChart_<?php echo $sqlcharts_inserted_script;?>);
+      csv_data='';csv_title='';
+      function drawChart_<?php echo $sqlcharts_inserted_script;?>() {
     <?php
         $html_temp = '';
-        
+        $csv_temp ='';
         $post_g = get_post($atts['id']);
         $xarg_s = get_post_meta($atts['id'], 'guaven_sqlcharts_xarg_s', true);
         $xarg_l = get_post_meta($atts['id'], 'guaven_sqlcharts_xarg_l', true);
@@ -352,10 +358,12 @@ function gvn_schart_shortcode($atts)
         
         foreach ($fvs as $fv) {
             $html_temp .= "['{$fv->$yarg_s}', {$fv->$xarg_s}, '#b87333'],";
+            $csv_temp .= addslashes($fv->$yarg_s).",".addslashes($fv->$xarg_s)."<br>";
             
         }
-        
-?>
+        ?>
+        csv_data='<?php echo $csv_temp;?>';
+        csv_title='<?php echo ''.$yarg_l.','.$xarg_l.'';  ?><br>';
       var data = google.visualization.arrayToDataTable([
          ['<?php
         echo $yarg_l;
@@ -371,28 +379,72 @@ function gvn_schart_shortcode($atts)
           <?php
         echo $tip_g == '3dpie' ? "is3D: true," : '';
 ?>
-          chart: {
+          chart_<?php echo $sqlcharts_inserted_script;?>: {
             title: '<?php
         echo $post_g->post_title;
 ?>',
           }
         };
 
-var chart = new google.visualization.<?php
+var chart_<?php echo $sqlcharts_inserted_script;?> = new google.visualization.<?php
         echo gvn_schart_libloads(get_post_meta($atts['id'], 'guaven_sqlcharts_graphtype', true), 'charts');
-?>(document.getElementById('columnchart_material'));
-        chart.draw(data, options);
+?>(document.getElementById('columnchart_material_<?php echo $sqlcharts_inserted_script;?>'));
+
+
+      var my_div = document.getElementById('chart_div_<?php echo $sqlcharts_inserted_script;?>');
+       google.visualization.events.addListener(chart_<?php echo $sqlcharts_inserted_script;?>, 'ready', function () {
+      my_div.innerHTML = '<img src="' + chart_<?php echo $sqlcharts_inserted_script;?>.getImageURI() + '">';
+    });
+
+        chart_<?php echo $sqlcharts_inserted_script;?>.draw(data, options);
       }
 
-    </script>
 
-<div id="columnchart_material" style="width:<?php
+
+  function saveaspng(id){
+window.open(jQuery("#"+id+" img").attr('src'));
+  }
+
+   function exportcsv(){
+var csvFile=csv_title+csv_data;
+csvFile=csvFile.replaceAll("<br>","\n");
+filename="mycsv.csv";
+var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+        if (navigator.msSaveBlob) { // IE 10+
+            navigator.msSaveBlob(blob, filename);
+        } else {
+            var link = document.createElement("a");
+            if (link.download !== undefined) { // feature detection
+                // Browsers that support HTML5 download attribute
+                var url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+//window.open().document.write(csv_title+csv_data);
+  }
+
+String.prototype.replaceAll = function(search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(search, 'g'), replacement);
+};
+    </script>
+<div id="chart_div_<?php echo $sqlcharts_inserted_script;?>" style="display:none"></div> <a href="javascript://" onclick="saveaspng('chart_div_<?php echo $sqlcharts_inserted_script;?>')">Save as PNG</a>
+<a href="javascript://" onclick="exportcsv()">Export CSV</a>
+<div id="columnchart_material_<?php echo $sqlcharts_inserted_script;?>" style="width:<?php
         echo $graph_width > 0 ? intval($graph_width) : '500';
 ?>px;
 height: <?php
         echo $graph_height > 0 ? intval($graph_height) : '400';
 ?>px"></div>
 <?php
+$sqlcharts_inserted_script++;
+
         return ob_get_clean();
     }
 }
@@ -424,7 +476,7 @@ function gvn_schart_wp_tags()
       ]);
 
         var options = {
-          chart: {
+          chart_<?php echo $sqlcharts_inserted_script;?>: {
             title: 'Company Performance',
             subtitle: 'Sales, Expenses, and Profit: 2014-2017',
           }

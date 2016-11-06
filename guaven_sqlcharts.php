@@ -3,7 +3,7 @@
  * Plugin Name:       Guaven SQL Charts
  * Plugin URI:        http://guaven.com/updatepusher
  * Description:       Turn your SQL queries to Google Charts
- * Version:           1.0.2
+ * Version:           1.0.1
  * Author:            Guaven Labs
  * Author URI:        http://guaven.com/
  * Text Domain:       guaven_sqlcharts
