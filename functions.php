@@ -3,9 +3,10 @@
 //postinstall function
 function guaven_sqlcharts_load_defaults()
 {
-    if (get_option("guaven_sqlcharts_already_installed") === false) {
-        update_option("guaven_sqlcharts_already_installed", "1");
+    if (get_option("guaven_sqlcharts_already_installed_2") === false) {
+        update_option("guaven_sqlcharts_already_installed_2", "1");
         guaven_sqlcharts_install_first_data();
+        
     }
 }
 
@@ -45,14 +46,21 @@ add_action('admin_notices', 'guaven_sqlcharts_my_admin_notice');
 
 
 
-
+function guaven_sqlcharts_enqueue_chart()
+{
+    wp_enqueue_script('guaven_sqlcharts_chartjs', plugins_url('asset/bundle.min.js', __FILE__));
+    wp_enqueue_script('guaven_sqlcharts_googlechart', 'https://www.gstatic.com/charts/loader.js');
+    
+}
+add_action('wp_enqueue_scripts', 'guaven_sqlcharts_enqueue_chart');
+add_action('admin_enqueue_scripts', 'guaven_sqlcharts_enqueue_chart');
 
 function guaven_sqlcharts_enqueue_main_style()
 {
-    wp_enqueue_style('guaven_sqlcharts_main_style', plugins_url('guaven_sqlcharts.css', __FILE__));
+    wp_enqueue_style('guaven_sqlcharts_main_style', plugins_url('asset/guaven_sqlcharts.css', __FILE__));
 }
-
 add_action('admin_enqueue_scripts', 'guaven_sqlcharts_enqueue_main_style');
+
 
 function guaven_sqlcharts_isJson($string)
 {
@@ -98,135 +106,19 @@ function guaven_sqlcharts_admin_front()
 // metabox for editor
 function guaven_sqlcharts_metabox_area()
 {
-    add_meta_box('gvn_schart_metabox', 'Configure your graph chart', 'gvn_schart_metabox', 'gvn_schart', 'advanced', 'default');
+    add_meta_box('guaven_sqlcharts_metabox', 'Configure your graph chart', 'guaven_sqlcharts_metabox', 'gvn_schart', 'advanced', 'default');
 }
 
-function gvn_schart_metabox()
+function guaven_sqlcharts_metabox()
 {
-    global $post;
-    wp_nonce_field('meta_box_nonce_action', 'meta_box_nonce_field');
-    
-    
-?>
-<h4>Choose your graph</h4>
-<p>
-<select name="guaven_sqlcharts_graphtype">
-<option value="pie" <?php
-    $guaven_sqlcharts_graphtype = get_post_meta($post->ID, 'guaven_sqlcharts_graphtype', true);
-    echo ($guaven_sqlcharts_graphtype == 'pie' ? 'selected' : '');
-?>>Pie Chart</option>
-
-    <option value="3dpie" <?php
-    echo ($guaven_sqlcharts_graphtype == '3dpie' ? 'selected' : '');
-?>>3D Pie Chart</option>
-
-<option value="column" <?php
-    echo ($guaven_sqlcharts_graphtype == 'column' ? 'selected' : '');
-?>>Column Chart</option>
-
-<option value="bar" <?php
-    echo ($guaven_sqlcharts_graphtype == 'bar' ? 'selected' : '');
-?>>Bar Chart</option>
-
-    <option value="area" <?php
-    echo ($guaven_sqlcharts_graphtype == 'area' ? 'selected' : '');
-?>>Area Chart</option>
-    
-
-</select>
-</p>
-<hr>
-
-
-
-
-<h4>Your SQL code  </h4>
-<span>(Use double " " quotes instead of single ' ' ones)</span>
-<p>
-<textarea name="guaven_sqlcharts_code" id="guaven_sqlcharts_code" style="width:100%" rows="6"><?php
-    echo (get_post_meta($post->ID, 'guaven_sqlcharts_code', true) != '' ? get_post_meta($post->ID, 'guaven_sqlcharts_code', true) : '');
-?>
-</textarea> 
-</p>
-<p style="text-align: right;">Need help with custom SQL reports? <a href="http://guaven.com/contact">Contact us.</a></p>
-<hr>
-
-
-
-
-<h4>Arguments</h4>
-<p>
-Label for X axis: <br><input type="text" name="guaven_sqlcharts_xarg_l" id="guaven_sqlcharts_xarg_l" value="<?php
-    echo get_post_meta($post->ID, 'guaven_sqlcharts_xarg_l', true);
-?>"></p>
-    <p>
-SQL field name of X axis (Write corresponding SQL field name here. f.e. diplay_name): 
-<br>
-<input type="text" name="guaven_sqlcharts_xarg_s" id="guaven_sqlcharts_xarg_s" value="<?php
-    echo get_post_meta($post->ID, 'guaven_sqlcharts_xarg_s', true);
-?>">
-</p>
-
-<p>
-Label for Y axis: <br><input type="text" name="guaven_sqlcharts_yarg_l" id="guaven_sqlcharts_yarg_l" value="<?php
-    echo get_post_meta($post->ID, 'guaven_sqlcharts_yarg_l', true);
-?>"></p><p>
-SQL field name of Y axis (Write corresponding SQL field name here. f.e. post_count): 
-<br>
-<input type="text" name="guaven_sqlcharts_yarg_s" id="guaven_sqlcharts_yarg_s" value="<?php
-    echo get_post_meta($post->ID, 'guaven_sqlcharts_yarg_s', true);
-?>">
-</p>
-
-<hr>
-
-
-<h4>Width and height (with px. don't type px itself, just numbers)</h4>
-<p>
-
-<input type="number" name="guaven_sqlcharts_chartwidth" id="guaven_sqlcharts_chartwidth" value="<?php
-    echo get_post_meta($post->ID, 'guaven_sqlcharts_chartwidth', true);
-?>">
-
-<input type="number" name="guaven_sqlcharts_chartheight" id="guaven_sqlcharts_chartheight" value="<?php
-    echo get_post_meta($post->ID, 'guaven_sqlcharts_chartheight', true);
-?>">
-</p>
-
-<hr>
-
-
-
-
-<?php
-    if (get_post_meta($post->ID, 'guaven_sqlcharts_graphtype', true) != '') {
-?>
-<div class="gf-alert-success gf-alert">
-<h4>
-Text shortcode: [gvn_schart id="<?php
-        echo $post->ID;
-?>"]
-<br>
-<br>
-PHP shorcode: &lt;?php echo do_shortcode(' [gvn_schart id="<?php
-        echo $post->ID;
-?>"]'); ?&gt;
-</h4>
-<p>Note: Shortcodes supports width and height attributes. F.e. [gvn_schart id="1" width="500" height="400"]. If no attributes, default width, height (which you enter in this page above) will be used.
-</div>
-<h4>Demo</h4>
-<?php
-        echo do_shortcode(' [gvn_schart id="' . $post->ID . '"]');
-        
-    }
+    require_once(dirname(__FILE__) . "/admin_metabox.php");
     
 }
 
 
 
-function gvn_schart_save_metabox_area($post_id, $post)
+function guaven_sqlcharts_save_metabox_area($post_id, $post)
 {
-    
     if (!isset($_POST['meta_box_nonce_field']) or !wp_verify_nonce($_POST['meta_box_nonce_field'], 'meta_box_nonce_action')) {
         return $post->ID;
     }
@@ -244,13 +136,13 @@ function gvn_schart_save_metabox_area($post_id, $post)
         update_post_meta($post->ID, $value, esc_attr($_POST[$value]));
     }
 }
-add_action('save_post', 'gvn_schart_save_metabox_area', 1, 2);
+add_action('save_post', 'guaven_sqlcharts_save_metabox_area', 1, 2);
 // save the custom fields
 
 
 
 
-function gvn_schart_libloads($type, $step)
+function guaven_sqlcharts_libloads($type, $step)
 {
     $stty = array(
         'bar' => array(
@@ -277,35 +169,331 @@ function gvn_schart_libloads($type, $step)
     
     return $stty[$type][$step];
 }
-
-
-
-
-
-
-function gvn_schart_shortcode($atts)
+function gvn_chart_check_sql_query($sql)
 {
-    
-    
-    global $wpdb;
-    $sql = html_entity_decode(get_post_meta($atts['id'], 'guaven_sqlcharts_code', true));
-    
-    
     $blacklister   = array(
         "delete",
         "update",
         "insert",
         "drop",
-        "truncate"
+        "truncate",
+        "alter"
     ); //add all
     $blacklister_f = 0;
     foreach ($blacklister as $key => $value) {
         if (strpos($sql, $value) !== false)
             $blacklister_f = 1;
     }
-    
+    return $blacklister_f;
+}
+
+function guaven_get_labels_and_values($id, $fvs)
+{
+    $values   = array();
+    $labels   = array();
+    $xarg_s   = get_post_meta($id, 'guaven_sqlcharts_xarg_s', true);
+    $xarg_l   = get_post_meta($id, 'guaven_sqlcharts_xarg_l', true);
+    $yarg_s   = get_post_meta($id, 'guaven_sqlcharts_yarg_s', true);
+    $yarg_l   = get_post_meta($id, 'guaven_sqlcharts_yarg_l', true);
+    $chartype = array(
+        'line_l' => 'Line',
+        'pie_l' => 'Pie',
+        'donut_l' => 'Pie',
+        'bar_l' => 'Bar',
+        'horizontalbar_l' => 'Horizontal Bar',
+        'area_l' => 'Line'
+    );
+    foreach ($fvs as $key => $value) {
+        $values[] = $value->$yarg_s;
+        $labels[] = '"' . $value->$xarg_s . '"';
+    }
+    return array(
+        $labels,
+        $values,
+        explode(";", $yarg_l)
+    );
+}
+
+function guaven_sqlcharts_print_chart_js($tip_g, $title, $labels, $values, $ylabel)
+{
+    if ($tip_g == 'line_l') {
+        guaven_sqlcharts_linedata($title, $labels, $values, $ylabel);
+    }
+    if ($tip_g == 'area_l') {
+        guaven_sqlcharts_linedata($title, $labels, $values, $ylabel, 'true');
+    } elseif ($tip_g == 'pie_l') {
+        guaven_sqlcharts_piedata($title, $labels, $values, $ylabel);
+    } elseif ($tip_g == 'donut_l') {
+        guaven_sqlcharts_piedata($title, $labels, $values, $ylabel, 'doughnut');
+    } elseif ($tip_g == 'bar_l') {
+        guaven_sqlcharts_bardata($title, $labels, $values, $ylabel);
+    } elseif ($tip_g == 'horizontalbar_l') {
+        guaven_sqlcharts_bardata($title, $labels, $values, $ylabel, 'horizontalBar');
+    }
+}
+
+function guaven_sqlcharts_local_shortcode($atts)
+{
+    global $wpdb;
+    $sql           = html_entity_decode(get_post_meta($atts['id'], 'guaven_sqlcharts_code', true));
+    $blacklister_f = gvn_chart_check_sql_query($sql);
     if ($blacklister_f == 1)
         return 'You given SQL code contains forbidden commands. Remember that you should only use SELECT queries';
+    $tip_g = get_post_meta($atts['id'], 'guaven_sqlcharts_graphtype', true);
+    
+    for($i=1;$i<20;$i++){ $replacearg=!empty($atts["arg".$i])?$atts["arg".$i]:0; 
+        $sql=str_replace("{arg".$i."}",esc_sql($replacearg),$sql);}
+    $sql_split         = explode(';', $sql);
+    $labels_and_values = array();
+    $post_g            = get_post($atts['id']);
+    
+    
+    for ($i = 0; $i < count($sql_split); $i++) {
+        if (!empty($sql_split[$i])) {
+
+            $fvs = $wpdb->get_results($sql_split[$i]);
+            $wpdb->show_errors();
+            ob_start();
+            $wpdb->print_error();
+            $printerror = ob_get_clean();
+            if ($printerror != '' and strpos($printerror, "[]") === false)
+                return $printerror;
+            elseif (empty($fvs))
+                return 'Your SQL returnes empty date, please recheck your SQL query above';
+            
+            ob_start();
+            global $sqlcharts_inserted_script;
+            if (empty($sqlcharts_inserted_script))
+                $sqlcharts_inserted_script = 1;
+            $labels_and_values[$i] = guaven_get_labels_and_values($atts['id'], $fvs);
+            $labels[$i]            = $labels_and_values[$i][0];
+            $values[$i]            = $labels_and_values[$i][1];
+            $ylabel[$i]            = !empty($labels_and_values[$i][2][$i]) ? $labels_and_values[$i][2][$i] : '';
+        }
+    }
+    
+?>
+ <canvas id="ct-chart_<?php
+    echo $sqlcharts_inserted_script;
+?>" width="400" height="400"></canvas>
+
+     <script type="text/javascript">
+     var ctx = jQuery("#ct-chart_<?php
+    echo $sqlcharts_inserted_script;
+?>");
+
+<?php
+    guaven_sqlcharts_print_chart_js($tip_g, $post_g->post_title, $labels, $values, $ylabel);
+?>
+
+</script>
+
+<?php
+    $sqlcharts_inserted_script++;
+    return ob_get_clean();
+}
+
+add_shortcode('gvn_schart_2', 'guaven_sqlcharts_local_shortcode');
+
+
+
+function guaven_sqlcharts_bardata($title, $labels, $values, $ylabel, $type = 'bar')
+{
+?>
+    var data = {
+    labels: [<?php
+    echo implode(",", $labels[0]);
+?>],
+    datasets: [
+    <?php
+    for ($i = 0; $i < count($values); $i++) {
+?>
+        {
+            label: "<?php
+        echo esc_attr($ylabel[$i]);
+?>",
+            backgroundColor: [
+                <?php
+        echo guaven_sqlcharts_colorgenerator(count($values[$i]), 0, 0, rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255));
+?>
+            ],
+            borderColor: [
+                <?php
+        echo guaven_sqlcharts_colorgenerator(count($values[$i]), 0, 0.2, rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255));
+?>
+            ],
+            borderWidth: 1,
+            data: [<?php
+        echo implode(",", $values[$i]);
+?>],
+        },
+        <?php
+    }
+?>
+    ]
+};
+var options=[];
+var myBarChart = new Chart(ctx, {
+    type: '<?php
+    echo $type;
+?>',
+    data: data,
+    options: options
+});
+    <?php
+}
+
+
+
+function guaven_sqlcharts_linedata($title, $labels, $values, $ylabel, $type = 'false')
+{
+?>
+var data = {
+    labels: [<?php
+    echo implode(",", $labels[0]);
+?>],
+    datasets: [
+    <?php
+    for ($i = 0; $i < count($values); $i++) {
+?>
+        {
+            label: "<?php
+        echo esc_attr($ylabel[$i]);
+?>",
+            fill: <?php
+        echo $type;
+?>,
+            lineTension: 0.1,
+            backgroundColor:  <?php
+        echo guaven_sqlcharts_colorgenerator(1, 1, 0.2, rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255));
+?>
+            borderColor:  <?php
+        echo guaven_sqlcharts_colorgenerator(1, 1, 0.2, rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255));
+?>
+            pointBorderColor: <?php
+        echo guaven_sqlcharts_colorgenerator(1, 1, 0.2, rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255));
+?>
+            pointHoverBackgroundColor: <?php
+        echo guaven_sqlcharts_colorgenerator(1, 1, 0.2, rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255));
+?>
+            pointHoverBorderColor:  <?php
+        echo guaven_sqlcharts_colorgenerator(1, 1, 0.2, rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255));
+?>
+            data: [<?php
+        echo implode(",", $values[$i]);
+?>],
+            spanGaps: false,
+        },
+        <?php
+    }
+?>
+    ]
+};
+var myLineChart = new Chart(ctx, {
+    type: 'line',
+    data: data,
+   options: {
+        scales: {
+            xAxes: [{
+                display: false
+            }]
+        }
+    }
+});
+    <?php
+}
+
+
+function guaven_sqlcharts_piedata($title, $labels, $values, $ylabel, $type = 'pie')
+{
+?>
+    var options=[];
+    var data = {
+    labels: [<?php
+    echo implode(",", $labels[0]);
+?>],
+    datasets: [
+    <?php
+    for ($i = 0; $i < count($values); $i++) {
+?>
+        {
+            data: [<?php
+        echo implode(",", $values[$i]);
+?>],
+            backgroundColor: [
+                <?php
+        echo guaven_sqlcharts_colorgenerator(count($labels[$i]), 1);
+?>
+            ],
+            hoverBackgroundColor: [
+               <?php
+        echo guaven_sqlcharts_colorgenerator(count($labels[$i]), 1);
+?>
+            ]
+        },
+<?php
+    }
+?>
+        ]
+};
+var myPieChart = new Chart(ctx,{
+    type: '<?php
+    echo $type;
+?>',
+    data: data,
+    options: options
+});
+    <?php
+}
+
+
+
+
+function guaven_sqlcharts_colorgenerator($count, $indic, $darkness = 0, $initcolor = '255,0,0')
+{
+    $initial_colors = array(
+        'linebg' => 'red',
+        'linebr' => 'yellow',
+        'linebc' => 'green',
+        'linehbg' => 'white',
+        'linehbc' => 'black'
+    );
+    if (!empty($initial_colors[$count]))
+        return '"' . $initial_colors[$count] . '",
+        ';
+    $ret = '';
+    for ($i = 0; $i < $count; $i++) {
+        $ret .= "'rgba(" . $initcolor . "," . ($darkness + 0.8 - $indic * $i * 0.8 / ($count)) . ")',
+        ";
+    }
+    return $ret;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*********************************Google Charts section**************************************/
+
+function guaven_sqlcharts_google_shortcode($atts)
+{
+    global $wpdb;
+    
+    $sql           = html_entity_decode(get_post_meta($atts['id'], 'guaven_sqlcharts_code', true));
+    $blacklister_f = gvn_chart_check_sql_query($sql);
+    if ($blacklister_f == 1)
+        return 'You given SQL code contains forbidden commands. Remember that you should only use SELECT queries';
+    
+    for($i=1;$i<20;$i++){ $replacearg=!empty($atts["arg".$i])?$atts["arg".$i]:0; 
+        $sql=str_replace("{arg".$i."}",esc_sql($replacearg),$sql);}
     
     $fvs = $wpdb->get_results($sql);
     
@@ -321,30 +509,31 @@ function gvn_schart_shortcode($atts)
     else {
         ob_start();
         global $sqlcharts_inserted_script;
-    if (empty($sqlcharts_inserted_script)) $sqlcharts_inserted_script=1;       
-
-       if ($sqlcharts_inserted_script==1) {
-         
+        if (empty($sqlcharts_inserted_script))
+            $sqlcharts_inserted_script = 1;
+        
 ?>
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <?php } ?>
      <script type="text/javascript">;
        google.charts.load('current', {'packages':[<?php
         $tip_g = get_post_meta($atts['id'], 'guaven_sqlcharts_graphtype', true);
         
-        echo gvn_schart_libloads($tip_g, 'packages');
+        echo guaven_sqlcharts_libloads($tip_g, 'packages');
 ?>]});
-      google.charts.setOnLoadCallback(drawChart_<?php echo $sqlcharts_inserted_script;?>);
+      google.charts.setOnLoadCallback(drawChart_<?php
+        echo $sqlcharts_inserted_script;
+?>);
       csv_data='';csv_title='';
-      function drawChart_<?php echo $sqlcharts_inserted_script;?>() {
+      function drawChart_<?php
+        echo $sqlcharts_inserted_script;
+?>() {
     <?php
         $html_temp = '';
-        $csv_temp ='';
-        $post_g = get_post($atts['id']);
-        $xarg_s = get_post_meta($atts['id'], 'guaven_sqlcharts_xarg_s', true);
-        $xarg_l = get_post_meta($atts['id'], 'guaven_sqlcharts_xarg_l', true);
-        $yarg_s = get_post_meta($atts['id'], 'guaven_sqlcharts_yarg_s', true);
-        $yarg_l = get_post_meta($atts['id'], 'guaven_sqlcharts_yarg_l', true);
+        $csv_temp  = '';
+        $post_g    = get_post($atts['id']);
+        $xarg_s    = get_post_meta($atts['id'], 'guaven_sqlcharts_xarg_s', true);
+        $xarg_l    = get_post_meta($atts['id'], 'guaven_sqlcharts_xarg_l', true);
+        $yarg_s    = get_post_meta($atts['id'], 'guaven_sqlcharts_yarg_s', true);
+        $yarg_l    = get_post_meta($atts['id'], 'guaven_sqlcharts_yarg_l', true);
         
         $graph_width  = get_post_meta($atts['id'], 'guaven_sqlcharts_chartwidth', true);
         $graph_height = get_post_meta($atts['id'], 'guaven_sqlcharts_chartheight', true);
@@ -357,18 +546,22 @@ function gvn_schart_shortcode($atts)
         }
         
         foreach ($fvs as $fv) {
-            $html_temp .= "['{$fv->$yarg_s}', {$fv->$xarg_s}, '#b87333'],";
-            $csv_temp .= addslashes($fv->$yarg_s).",".addslashes($fv->$xarg_s)."<br>";
+            $html_temp .= "['{$fv->$xarg_s}', {$fv->$yarg_s}, '#b87333'],";
+            $csv_temp .= addslashes($fv->$xarg_s) . "," . addslashes($fv->$yarg_s) . "<br>";
             
         }
-        ?>
-        csv_data='<?php echo $csv_temp;?>';
-        csv_title='<?php echo ''.$yarg_l.','.$xarg_l.'';  ?><br>';
+?>
+        csv_data='<?php
+        echo $csv_temp;
+?>';
+        csv_title='<?php
+        echo '' . $xarg_l . ',' . $yarg_l . '';
+?><br>';
       var data = google.visualization.arrayToDataTable([
          ['<?php
-        echo $yarg_l;
-?>', '<?php
         echo $xarg_l;
+?>', '<?php
+        echo $yarg_l;
 ?>', { role: 'style' }],
         <?php
         echo $html_temp;
@@ -379,81 +572,68 @@ function gvn_schart_shortcode($atts)
           <?php
         echo $tip_g == '3dpie' ? "is3D: true," : '';
 ?>
-          chart_<?php echo $sqlcharts_inserted_script;?>: {
+          chart_<?php
+        echo $sqlcharts_inserted_script;
+?>: {
             title: '<?php
         echo $post_g->post_title;
 ?>',
           }
         };
 
-var chart_<?php echo $sqlcharts_inserted_script;?> = new google.visualization.<?php
-        echo gvn_schart_libloads(get_post_meta($atts['id'], 'guaven_sqlcharts_graphtype', true), 'charts');
-?>(document.getElementById('columnchart_material_<?php echo $sqlcharts_inserted_script;?>'));
+var chart_<?php
+        echo $sqlcharts_inserted_script;
+?> = new google.visualization.<?php
+        echo guaven_sqlcharts_libloads(get_post_meta($atts['id'], 'guaven_sqlcharts_graphtype', true), 'charts');
+?>(document.getElementById('columnchart_material_<?php
+        echo $sqlcharts_inserted_script;
+?>'));
 
 
-      var my_div = document.getElementById('chart_div_<?php echo $sqlcharts_inserted_script;?>');
-       google.visualization.events.addListener(chart_<?php echo $sqlcharts_inserted_script;?>, 'ready', function () {
-      my_div.innerHTML = '<img src="' + chart_<?php echo $sqlcharts_inserted_script;?>.getImageURI() + '">';
+      var my_div = document.getElementById('chart_div_<?php
+        echo $sqlcharts_inserted_script;
+?>');
+       google.visualization.events.addListener(chart_<?php
+        echo $sqlcharts_inserted_script;
+?>, 'ready', function () {
+      my_div.innerHTML = '<img src="' + chart_<?php
+        echo $sqlcharts_inserted_script;
+?>.getImageURI() + '">';
     });
 
-        chart_<?php echo $sqlcharts_inserted_script;?>.draw(data, options);
+        chart_<?php
+        echo $sqlcharts_inserted_script;
+?>.draw(data, options);
       }
 
-
-
-  function saveaspng(id){
-window.open(jQuery("#"+id+" img").attr('src'));
-  }
-
-   function exportcsv(){
-var csvFile=csv_title+csv_data;
-csvFile=csvFile.replaceAll("<br>","\n");
-filename="mycsv.csv";
-var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
-        if (navigator.msSaveBlob) { // IE 10+
-            navigator.msSaveBlob(blob, filename);
-        } else {
-            var link = document.createElement("a");
-            if (link.download !== undefined) { // feature detection
-                // Browsers that support HTML5 download attribute
-                var url = URL.createObjectURL(blob);
-                link.setAttribute("href", url);
-                link.setAttribute("download", filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        }
-
-//window.open().document.write(csv_title+csv_data);
-  }
-
-String.prototype.replaceAll = function(search, replacement) {
-    var target = this;
-    return target.replace(new RegExp(search, 'g'), replacement);
-};
     </script>
-<div id="chart_div_<?php echo $sqlcharts_inserted_script;?>" style="display:none"></div> <a href="javascript://" onclick="saveaspng('chart_div_<?php echo $sqlcharts_inserted_script;?>')">Save as PNG</a>
+<div id="chart_div_<?php
+        echo $sqlcharts_inserted_script;
+?>" style="display:none"></div> 
+<a href="javascript://" onclick="saveaspng('chart_div_<?php
+        echo $sqlcharts_inserted_script;
+?>')">Save as PNG</a>
 <a href="javascript://" onclick="exportcsv()">Export CSV</a>
-<div id="columnchart_material_<?php echo $sqlcharts_inserted_script;?>" style="width:<?php
+<div id="columnchart_material_<?php
+        echo $sqlcharts_inserted_script;
+?>" style="width:<?php
         echo $graph_width > 0 ? intval($graph_width) : '500';
 ?>px;
 height: <?php
         echo $graph_height > 0 ? intval($graph_height) : '400';
 ?>px"></div>
 <?php
-$sqlcharts_inserted_script++;
-
+        $sqlcharts_inserted_script++;
+        
         return ob_get_clean();
     }
 }
-add_shortcode('gvn_schart', 'gvn_schart_shortcode');
+add_shortcode('gvn_schart', 'guaven_sqlcharts_google_shortcode');
 
 
 
 
-function gvn_schart_wp_tags()
+function guaven_sqlcharts_wp_tags()
 {
     $tags   = get_tags(array(
         "order" => "DESC",
@@ -476,7 +656,9 @@ function gvn_schart_wp_tags()
       ]);
 
         var options = {
-          chart_<?php echo $sqlcharts_inserted_script;?>: {
+          chart_<?php
+    echo $sqlcharts_inserted_script;
+?>: {
             title: 'Company Performance',
             subtitle: 'Sales, Expenses, and Profit: 2014-2017',
           }
@@ -488,7 +670,6 @@ function gvn_schart_wp_tags()
 
 function guaven_sqlcharts_install_first_data()
 {
-    
     require_once(dirname(__FILE__) . "/initial_data.php");
     gvn_chart_sample_nonxml_data();
 }
